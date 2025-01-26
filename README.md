@@ -63,12 +63,14 @@ aws s3 cp index.html s3://mysuperbacketname2021
     -  *"iam:GetPolicyVersion",*
     -  *"iam:ListPolicyVersions",*
     -  *"iam:ListInstanceProfilesForRole",*
+    -  *"iam:CreateRole",*
     -  *"iam:DeletePolicy",*
     -  *"iam:DeleteRole",*
     -  *"iam:GetRole",*
     -  *"iam:DetachRolePolicy",*
     -  *"iam:RemoveRoleFromInstanceProfile",*
     -  *"iam:GetPolicy",*
+    -  *"s3:CreateBucket",*
     -  *"s3:PutBucketAcl",*
     -  *"s3:GetBucketAcl",*
     -  *"s3:PutBucketPolicy",*
@@ -81,4 +83,9 @@ aws s3 cp index.html s3://mysuperbacketname2021
     -  *"iam:AddRoleToInstanceProfile"*
 
  - записал в бакет файл веб-страницы. Для этого внёс изменения в [user_data.yaml.tpl](modules\instances\user_data.yaml.tpl) файл.
+
+ В результате к картинке *cafe.jpg* в хранилице добавился файл *index.html*</br>
+ ![Amazon S3 Buckets list](images/Task_1_1.png)
+
+
 
