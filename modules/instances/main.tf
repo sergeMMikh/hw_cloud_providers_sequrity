@@ -20,11 +20,25 @@ resource "aws_launch_configuration" "web_server_lc" {
   instance_type = var.vm_public_instance_type
   key_name      = var.key_name
 
-  security_groups = [var.security_group_id]
+  security_groups      = [var.security_group_id]
+  iam_instance_profile = var.iam_instance_profile
 
   user_data = templatefile("${path.module}/user_data.yaml.tpl", {
     s3_image_url = var.s3_image_url
   })
+
+  # user_data = <<EOF
+
+  #   #!/bin/bash
+  #   sudo apt install httpd -y
+  #   service httpd start
+  #   chkconfig httpd on
+  #   cd /var/www/html
+  #   echo "<html><h1>My cool web-server</h1></html>" > index.html
+  #   aws s3 mb s3://hw-smmikh-january-2025-store-bucket
+  #   aws s3 cp index.html s3://hw-smmikh-january-2025-store-bucket
+
+  #   EOF
 
   lifecycle {
     create_before_destroy = true

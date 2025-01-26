@@ -2,6 +2,14 @@ module "network" {
   source = "./modules/network"
 }
 
+module "iam" {
+  source                = "./modules/iam"
+  role_name             = "ec2-s3-access-role"
+  policy_name           = "ec2-s3-write-policy"
+  s3_bucket_arn         = "arn:aws:s3:::hw-smmikh-january-2025-store-bucket"
+  instance_profile_name = "ec2-instance-profile"
+}
+
 module "instances" {
   source = "./modules/instances"
 
@@ -15,6 +23,7 @@ module "instances" {
   security_group_id       = module.network.security_group_id
   vpc_id                  = module.network.vpc_id
   s3_image_url            = module.storage.s3_image_url
+  iam_instance_profile    = module.iam.instance_profile_name
 }
 
 module "storage" {

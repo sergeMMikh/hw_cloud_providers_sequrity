@@ -47,48 +47,38 @@ aws s3 cp index.html s3://mysuperbacketname2021
 
 **Решение**
 
-1. Следуя структуре проекта из предыдущего задания создал новый модуль [*storage*](modules/storage/). В нём описал процесс создания S3 bucket.
-Здесь для обеспечения доступа к ресурсу извне пришлось создать [*aws_s3_bucket_public_access_block*](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) и [*aws_s3_bucket_policy*](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy).</br>
-Identy and Access Manager (IAM) AWS требует выдачи соответсвующего разрешения для пользовтаеля, от имени которого я поднимаю ресурсы:
-```
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:PutBucketAcl",
-        "s3:GetBucketAcl"
-      ],
-      "Resource": "arn:aws:s3:::hw-smmikh-january-2025-store-bucket"
-    }
-  ]
-}
-```
-Изображение [*cafe.jpg*](images/cafe.jpg) поместил в нутрь S3 через [*aws_s3_object*](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object). В итоге оно было доступно по ссылке *"https://hw-smmikh-january-2025-store-bucket.s3.amazonaws.com/cafe.jpg"*.</br>
-<img src="images/Task_1_3.png" alt="Task_1_3" width="700" height="auto"></br> Ссылку я получил из [*outputs*](modules/storage/outputs.tf):</br>
-<img src="images/Task_1_1.png" alt="Task_1_1" width="700" height="auto"></br>
-Хранилище *hw-smmikh-january-2025-store-bucket* появилось в списке:</br>
-<img src="images/Task_1_2.png" alt="Task_1_2" width="700" height="auto"></br>
+1. С помощью роли IAM записать файлы ЕС2 в S3-бакет:
+ - в рамках существующей структуры проекта сздал отдельный модуль [iam](modules/iam/) для работы с IAM AWS;
+ - создал роль [*aws_iam_role*](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) в IAM для возможности записи в S3 бакет;
+  - создал полутику S3 для записи в бакет[*aws_iam_policy*](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy)
+ - написал [*aws_iam_role_policy_attachment*](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment), связывающий политику с ролью.
+ - применил роль к ЕС2-инстансу, а менно создал [*aws_iam_instance_profile*](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_instance_profile) и добавил запись *iam_instance_profile* в описание инстанса;
+ - для того, что бы всё это великолепие заработало, пришлось добавить море разрешений для текущего пользователя. Они касались как дополгительных разрешений для instance и bucket, так и просто разрешений для работы с разрешениями. Вот их список:
+    -  *"iam:CreateRole",*
+    -  *"iam:CreatePolicy",*
+    -  *"iam:AttachRolePolicy",*
+    -  *"iam:PassRole",*
+    -  *"iam:ListRolePolicies",*
+    -  *"iam:ListAttachedRolePolicies",*
+    -  *"iam:GetPolicyVersion",*
+    -  *"iam:ListPolicyVersions",*
+    -  *"iam:ListInstanceProfilesForRole",*
+    -  *"iam:DeletePolicy",*
+    -  *"iam:DeleteRole",*
+    -  *"iam:GetRole",*
+    -  *"iam:DetachRolePolicy",*
+    -  *"iam:RemoveRoleFromInstanceProfile",*
+    -  *"iam:GetPolicy",*
+    -  *"s3:PutBucketAcl",*
+    -  *"s3:GetBucketAcl",*
+    -  *"s3:PutBucketPolicy",*
+    -  *"s3:GetBucketPolicy",*
+    -  *"s3:PutBucketPolicy",*
+    -  *"s3:ListAllMyBuckets",*
+    -  *"iam:CreateInstanceProfile",*
+    -  *"iam:GetInstanceProfile",*
+    -  *"iam:DeleteInstanceProfile",*
+    -  *"iam:AddRoleToInstanceProfile"*
 
-2. Сделал [*Launch configurations*](modules/instances/main.tf) с использованием bootstrap-скрипта с созданием веб-страницы, на которой будет ссылка на картинку в S3. здесь я воспользовался *user_data*. Создал отдельный файл с шаблоном [*cloud-config*](modules/instances/user_data.yaml.tpl), куда передал переменную s3_image_url со ссылкой на S3:
-```
-user_data = templatefile("${path.module}/user_data.yaml.tpl", {
-    s3_image_url = var.s3_image_url
-  })
-```
-
-3. Написал [*aws_launch_configuration*](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_configuration) создания одинаковых инстансов через [*Autoscaling Group*](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group) и [*load balanser*](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb). для Загрузить три ЕС2-инстанса и настроить LB с помощью Autoscaling Group.
-
-Ссылку на публичный ip *Autoscaling Group* я так же вывел в [outputs](modules/storage/outputs.tf):</br>
-<img src="images/Task_1_1.png" alt="Task_1_1" width="700" height="auto"></br>
-
-Скриншот обращения в браузере по DNS имени балансировщика нагрузки:</br>
-<img src="images/Task_3_1.png" alt="Task_3_1" width="500" height="auto"></br>
-Список запущенных виртуальных машие, видно использование двух зон:</br>
-<img src="images/Task_3_2.png" alt="Task_3_2" width="700" height="auto"></br>
-*Load Balanse*r:</br>
-<img src="images/Task_3_3.png" alt="Task_3_3" width="700" height="auto"></br>
-*Target Group* со списком инстансов и *Health Check* (все инстансы здоровы):</br>
-<img src="images/Task_3_3.png" alt="Task_3_3" width="700" height="auto"></br>
+ - записал в бакет файл веб-страницы. Для этого внёс изменения в [user_data.yaml.tpl](modules\instances\user_data.yaml.tpl) файл.
 

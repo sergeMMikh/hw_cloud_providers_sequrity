@@ -53,3 +53,9 @@ variable "vpc_id" {
   type        = string
   description = "The ID of the VPC"
 }
+
+
+variable "iam_instance_profile" {
+  description = "IAM profile for instance"
+  type        = string
+}
