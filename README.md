@@ -87,5 +87,11 @@ aws s3 cp index.html s3://mysuperbacketname2021
  В результате к картинке *cafe.jpg* в хранилице добавился файл *index.html*</br>
  ![Amazon S3 Buckets list](images/Task_1_1.png)
 
+2. Организация шифрования содержимого S3-бакета:
 
+ - добавитл в [файле конфигурации S3](modules/storage/main.tf) добавил ресурс [*aws_s3_bucket_server_side_encryption_configuration*](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_object#encrypting-with-kms-key) для автоматического шифрования всех новых объектов в бакете с использованием алгоритма AES256;
+ - проверка настройки шифрования хранилища (*BucketKeyEnabled* не включаются автоматически, *false*):</br>  
+ `aws s3api get-bucket-encryption --bucket hw-smmikh-january-2025-store-bucket`</br> и обьекта:</br> `aws s3api head-object --bucket hw-smmikh-january-2025-store-bucket --key cafe.jpg`</br>
+ ![результат проверки](images/Task_2_1.png)
+ - включить шифрование SSE-S3 бакету S3 для шифрования всех вновь добавляемых объектов в этот бакет.
 

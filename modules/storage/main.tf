@@ -6,24 +6,36 @@ resource "aws_s3_bucket" "web_images" {
   }
 }
 
+# Конфигурация шифрования бакета по умолчанию
+resource "aws_s3_bucket_server_side_encryption_configuration" "web_images_sse" {
+  bucket = aws_s3_bucket.web_images.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
 resource "aws_s3_bucket_public_access_block" "web_images_block" {
   bucket = aws_s3_bucket.web_images.id
 
-  block_public_acls       = false  
-  block_public_policy     = false  
-  ignore_public_acls      = false  
-  restrict_public_buckets = false  
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
 }
 
 
 resource "aws_s3_object" "image" {
-  bucket = aws_s3_bucket.web_images.id
-  key    = "cafe.jpg"
-  source = "images/cafe.jpg"
-
-  etag = filemd5("images/cafe.jpg")
+  bucket                 = aws_s3_bucket.web_images.id
+  key                    = "cafe.jpg"
+  source                 = "images/cafe.jpg"
+  etag                   = filemd5("images/cafe.jpg")
+  server_side_encryption = "AES256"
 }
 
+# Политика доступа для публичного чтения
 resource "aws_s3_bucket_policy" "web_images_policy" {
   bucket = aws_s3_bucket.web_images.id
   policy = jsonencode({
