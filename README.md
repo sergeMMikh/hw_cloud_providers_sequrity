@@ -95,3 +95,38 @@ aws s3 cp index.html s3://mysuperbacketname2021
  ![результат проверки](images/Task_2_1.png)
  - включить шифрование SSE-S3 бакету S3 для шифрования всех вновь добавляемых объектов в этот бакет.
 
+3. *Создание сертификата SSL и применение его к ALB:
+ - для начала пришлось добавить дополнительные policy для пользовтателя, от имени которого я запускаю terraform:
+   -  *"acm:RequestCertificate"*,
+	-  *"acm:AddTagsToCertificate"*,
+	-  *"acm:DescribeCertificate"*,
+	-  *"acm:ListTagsForCertificate"*,
+	-  *"acm:DeleteCertificate"*
+
+ - добавил в [фал конфигурации инстансов](modules/instances/main.tf) ресурс [aws_acm_certificate](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate);
+ - я не стал делать запись в Route53 на собственный поддомен, так как он не управляется AWS. Я использовал метод верификации "DNS". При запуске `terraform apply` я получил сообщение об ошибке с именем сертификата `arn:aws:acm:eu-central-1:133500759208:certificate/66a3ef2c-c190-4e7e-a0b6-e1c5af9eb39d`. Далее через запрос `aws acm describe-certificate --certificate-arn arn:aws:acm:eu-central-1:133500759208:certificate/66a3ef2c-c190-4e7e-a0b6-e1c5af9eb39d` с этим именем я полачил данные сертификата для верификации:</br>
+ ![данные сертификата](images/Task_3_1.png)</br>
+ С этими данными сделал A- запись в настройках домена  </br>
+ ![настройка поддомена](images/Task_3_2.png)</br>
+  Через некоторое время сертификат был подверждён </br>
+ ![настройка поддомена](images/Task_3_3.png)</br>
+И сборка с сертификатом была успешна </br>
+ ![настройка поддомена](images/Task_3_4.png)</br>
+  
+ - применил к HTTPS-запросам на LB созданный ранее сертификат:
+ ```
+ resource "aws_lb_listener" "https_listener" {
+  load_balancer_arn = aws_lb.web_alb.arn
+  port              = 443
+  protocol          = "HTTPS"
+
+  ssl_policy      = "ELBSecurityPolicy-2016-08"
+  certificate_arn = aws_acm_certificate.web_certificate.arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.web_target_group.arn
+  }
+}
+```
+
